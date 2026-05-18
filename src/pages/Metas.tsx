@@ -6,9 +6,7 @@ import type { GastoCategoria } from '../services/dashboard'
 import { getBudgets, createBudget, updateBudget } from '../services/budgets'
 import type { Budget } from '../types'
 import { 
-  Target, 
   Edit3, 
-  Plus, 
   Loader2, 
   AlertCircle, 
   CheckCircle2, 

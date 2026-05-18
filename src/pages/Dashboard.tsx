@@ -18,7 +18,6 @@ import {
   DollarSign, 
   AlertTriangle,
   ArrowDownRight,
-  ArrowUpRight,
   Tv, 
   ShoppingCart, 
   Fuel, 
@@ -153,7 +152,7 @@ export const Dashboard: React.FC = () => {
   const [totalOrcado, setTotalOrcado] = useState<number>(0)
   const [gastosCategorias, setGastosCategorias] = useState<GastoCategoria[]>([])
   const [ultimasTransactions, setUltimasTransactions] = useState<TransactionWithCategory[]>([])
-  const [compValor, setCompValor] = useState<{ atual: number; anterior: number }>({ atual: 0, anterior: 0 })
+
 
   // Estados de controle de carregamento e erros
   const [loading, setLoading] = useState<boolean>(true)
@@ -202,8 +201,7 @@ export const Dashboard: React.FC = () => {
         gasto,
         orcado,
         gastosCat,
-        txs,
-        cVal
+        txs
       ] = await Promise.all([
         getTotalGastoRange(start, end),
         getTotalOrcado(),
@@ -216,7 +214,6 @@ export const Dashboard: React.FC = () => {
       setTotalOrcado(orcado)
       setGastosCategorias(gastosCat)
       setUltimasTransactions(txs)
-      setCompValor(cVal)
     } catch (err: any) {
       console.error('[Dashboard] Erro de carregamento:', err)
       setDbError(err.message || 'Falha ao conectar e buscar métricas do Supabase.')
@@ -263,10 +260,8 @@ export const Dashboard: React.FC = () => {
     }
   }, [filtroPeriodo, filtroComparativo])
 
-  // 1. Variação percentual da comparação
-  const varComparativo = compValor.anterior === 0
-    ? (compValor.atual > 0 ? 100 : 0)
-    : parseFloat((((compValor.atual - compValor.anterior) / compValor.anterior) * 100).toFixed(1))
+
+
 
   // 2. Saldo disponível (orçado total - gasto no período)
   const saldoDisponivel = totalOrcado - totalGastoMes
@@ -334,7 +329,7 @@ export const Dashboard: React.FC = () => {
       catMap[cName] = (catMap[cName] || 0) + Number(tx.amount)
     })
 
-    const [y, m, d] = dia.split('-')
+    const [, m, d] = dia.split('-')
     return {
       dateId: dia,
       dateDisplay: `${d}/${m}`,
@@ -344,7 +339,7 @@ export const Dashboard: React.FC = () => {
   })
 
   // Tooltip customizado para o LineChart
-  const CustomLineTooltip = ({ active, payload, label }: any) => {
+  const CustomLineTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload
       return (
