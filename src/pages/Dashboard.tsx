@@ -4,6 +4,7 @@ import ProgressBar from '../components/ProgressBar'
 import Badge from '../components/Badge'
 import FAB from '../components/FAB'
 import { useNavigate } from 'react-router-dom'
+import { supabase } from '../lib/supabase'
 import {
   getTotalOrcado,
   getTotalGastoRange,
@@ -258,18 +259,45 @@ export const Dashboard: React.FC = () => {
   }
 
   useEffect(() => {
+    let start = ''
+    let end = ''
+    
     if (filtroPeriodo !== 'personalizado') {
       const { startDate, endDate } = obterDatasPorPeriodo(filtroPeriodo)
+      start = startDate
+      end = endDate
       loadDashboardData(startDate, endDate, filtroComparativo)
     } else {
       if (personalizadoInicio && personalizadoFim) {
+        start = personalizadoInicio
+        end = personalizadoFim
         loadDashboardData(personalizadoInicio, personalizadoFim, filtroComparativo)
       } else {
         const { startDate, endDate } = obterDatasPorPeriodo('personalizado', hojeStr, hojeStr)
+        start = startDate
+        end = endDate
         loadDashboardData(startDate, endDate, filtroComparativo)
       }
     }
-  }, [filtroPeriodo, filtroComparativo])
+
+    // Inscreve-se nas alterações em tempo real da tabela transactions
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'transactions' },
+        () => {
+          if (start && end) {
+            loadDashboardData(start, end, filtroComparativo)
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [filtroPeriodo, filtroComparativo, personalizadoInicio, personalizadoFim])
 
 
 

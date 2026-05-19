@@ -3,6 +3,7 @@ import Topbar from '../components/Topbar'
 import Badge from '../components/Badge'
 import Modal from '../components/Modal'
 import FAB from '../components/FAB'
+import { supabase } from '../lib/supabase'
 import { getCategories } from '../services/categories'
 import { 
   getTransactions, 
@@ -139,6 +140,21 @@ export const Historico: React.FC = () => {
   // Carrega na montagem e também quando o filterType muda automaticamente
   useEffect(() => {
     loadData()
+
+    const channel = supabase
+      .channel('historico-db-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'transactions' },
+        () => {
+          loadData()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [filterType])
 
   // Auto-close success message toast
