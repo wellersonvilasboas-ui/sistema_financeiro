@@ -55,17 +55,17 @@ export const Sidebar: React.FC = () => {
   const avatarUrl = user?.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'
 
   return (
-    <aside className="flex h-screen select-none border-r border-[#E8E8EE] shrink-0">
-      {/* COLUNA 1: Rail de ícones (64px) */}
-      <div className="w-[64px] bg-[#1E1B4B] flex flex-col items-center justify-between py-6">
-        <div className="flex flex-col items-center gap-6 w-full">
-          {/* Logo "F" em box roxo */}
-          <div className="w-10 h-10 bg-[#7F77DD] rounded-[10px] flex items-center justify-center text-white font-extrabold text-lg shadow-lg shadow-[#7F77DD]/20">
+    <aside className="fixed bottom-0 left-0 right-0 h-16 w-full flex flex-row border-t border-[#E8E8EE] bg-[#1E1B4B] select-none shrink-0 z-50 md:relative md:bottom-auto md:left-auto md:right-auto md:h-screen md:w-auto md:flex-row md:border-r md:border-t-0 md:bg-transparent">
+      {/* COLUNA 1: Rail de ícones (64px no desktop, 100% de largura no mobile) */}
+      <div className="w-full h-full flex flex-row items-center justify-around px-2 md:w-[64px] md:h-full md:flex-col md:py-6 md:px-0 md:justify-between bg-[#1E1B4B]">
+        <div className="flex flex-row md:flex-col items-center justify-around w-full md:w-auto gap-1 md:gap-6">
+          {/* Logo "F" em box roxo (oculto no mobile) */}
+          <div className="hidden md:flex w-10 h-10 bg-[#7F77DD] rounded-[10px] items-center justify-center text-white font-extrabold text-lg shadow-lg shadow-[#7F77DD]/20">
             F
           </div>
 
           {/* Ícones de Navegação do Rail */}
-          <nav className="flex flex-col items-center gap-3 w-full px-2">
+          <nav className="flex flex-row md:flex-col items-center justify-around md:gap-3 gap-2 w-full md:w-auto px-1 md:px-2">
             {menuItems.map((item) => {
               const isActive = currentPath === item.path
               const Icon = item.icon
@@ -84,21 +84,30 @@ export const Sidebar: React.FC = () => {
                 </button>
               )
             })}
+
+            {/* Botão de Logout no mobile (oculto no desktop) */}
+            <button
+              onClick={logout}
+              className="w-10 h-10 rounded-[10px] flex items-center justify-center text-[#9CA3AF] hover:text-[#EF4444] hover:bg-white/5 transition-all duration-200 cursor-pointer md:hidden"
+              title="Sair"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
           </nav>
         </div>
 
-        {/* Botão de Logout no Rail */}
+        {/* Botão de Logout no desktop (oculto no mobile) */}
         <button
           onClick={logout}
-          className="w-10 h-10 rounded-[10px] flex items-center justify-center text-[#9CA3AF] hover:text-[#EF4444] hover:bg-white/5 transition-all duration-200 cursor-pointer"
+          className="hidden md:flex w-10 h-10 rounded-[10px] items-center justify-center text-[#9CA3AF] hover:text-[#EF4444] hover:bg-white/5 transition-all duration-200 cursor-pointer"
           title="Sair"
         >
           <LogOut className="w-5 h-5" />
         </button>
       </div>
 
-      {/* COLUNA 2: Painel lateral branco (220px) */}
-      <div className="w-[220px] bg-white flex flex-col justify-between py-6 px-4">
+      {/* COLUNA 2: Painel lateral branco (220px - oculto no mobile) */}
+      <div className="hidden md:flex w-[220px] bg-white flex-col justify-between py-6 px-4">
         <div className="flex flex-col gap-6">
           {/* Foto + Nome do Usuário */}
           <div className="flex items-center gap-3 border-b border-[#E8E8EE] pb-4">

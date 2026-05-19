@@ -30,6 +30,9 @@ export const Configuracoes: React.FC = () => {
   const [passwordLoading, setPasswordLoading] = useState(false)
   const [passwordError, setPasswordError] = useState<string | null>(null)
 
+  // Recovery Mode Banner Logic
+  const [isFromRecovery, setIsFromRecovery] = useState(false)
+
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setPasswordError(null)
@@ -127,6 +130,12 @@ export const Configuracoes: React.FC = () => {
 
   useEffect(() => {
     loadCategories()
+    
+    const fromRecovery = localStorage.getItem('password_recovery_mode')
+    if (fromRecovery) {
+      setIsFromRecovery(true)
+      localStorage.removeItem('password_recovery_mode')
+    }
   }, [])
 
   // Auto-close success message toast
@@ -238,6 +247,24 @@ export const Configuracoes: React.FC = () => {
       {/* Conteúdo scrollável com fundo geral #F4F5F7 */}
       <main className="flex-1 overflow-y-auto p-6 bg-[#F4F5F7] flex flex-col gap-6">
         
+        {/* Banner de Recuperação de Senha */}
+        {isFromRecovery && (
+          <div className="p-4 bg-[#EEEDFE] border border-[#7F77DD]/30 rounded-[14px] text-xs font-medium text-[#534AB7] flex items-start gap-3.5 relative animate-in slide-in-from-top duration-300 shadow-sm shadow-[#7F77DD]/10">
+            <Lock className="w-5 h-5 text-[#7F77DD] shrink-0 mt-0.5" />
+            <div className="flex-1 pr-6 leading-relaxed">
+              <strong className="text-sm font-bold text-[#1E1B4B] block mb-1">Link de recuperação acessado com sucesso!</strong>
+              Você entrou usando o link de recuperação de e-mail. Por segurança, digite a sua nova senha abaixo na seção <strong>"Segurança e Senha"</strong> para redefinir o acesso à sua conta.
+            </div>
+            <button 
+              type="button"
+              onClick={() => setIsFromRecovery(false)}
+              className="absolute top-3.5 right-3.5 text-[#7F77DD] hover:text-[#534AB7] cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
         {/* Bloco de Perfil da Conta */}
         <section className="bg-white border border-[#E8E8EE] rounded-[14px] shadow-sm p-6 flex flex-col gap-5">
           <div className="flex items-center gap-3 pb-4 border-b border-[#E8E8EE]">

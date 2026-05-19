@@ -26,3 +26,17 @@ export async function signOut() {
     throw error
   }
 }
+
+export async function sendPasswordReset(email: string): Promise<void> {
+  if (!email) {
+    throw new Error('E-mail é obrigatório.')
+  }
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + '/configuracoes',
+  })
+
+  if (error) {
+    throw error
+  }
+}

@@ -4,6 +4,7 @@ import ProgressBar from '../components/ProgressBar'
 import { getGastoPorCategoria } from '../services/dashboard'
 import type { GastoCategoria } from '../services/dashboard'
 import { getBudgets, createBudget, updateBudget } from '../services/budgets'
+import { formatCurrency, getCurrencySymbol } from '../utils/format'
 import type { Budget } from '../types'
 import { 
   Edit3, 
@@ -267,10 +268,10 @@ export const Metas: React.FC = () => {
                   </div>
                   <div className="flex items-center justify-between mb-6">
                     <span className="text-xl font-extrabold text-[#111827]">
-                      R$ {cat.gasto.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {formatCurrency(cat.gasto)}
                     </span>
                     <span className="text-sm font-bold text-[#9CA3AF]">
-                      R$ {limite.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {formatCurrency(limite)}
                     </span>
                   </div>
 
@@ -280,8 +281,8 @@ export const Metas: React.FC = () => {
                     {hasLimite ? (
                       <span className={restante >= 0 ? 'text-[#9CA3AF]' : 'text-[#EF4444]'}>
                         {restante >= 0 
-                          ? `R$ ${restante.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} restantes`
-                          : `R$ ${Math.abs(restante).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} excedidos`
+                          ? `${formatCurrency(restante)} restantes`
+                          : `${formatCurrency(Math.abs(restante))} excedidos`
                         }
                       </span>
                     ) : (
@@ -320,7 +321,7 @@ export const Metas: React.FC = () => {
 
             <form onSubmit={handleLimitSubmit} className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-[#111827]">Limite mensal (R$)</label>
+                <label className="text-xs font-semibold text-[#111827]">Limite mensal ({getCurrencySymbol()})</label>
                 <input
                   type="number"
                   step="0.01"

@@ -13,29 +13,29 @@ import {
 } from '../services/dashboard'
 import type { GastoCategoria } from '../services/dashboard'
 import type { TransactionWithCategory } from '../services/transactions'
-import { 
-  Clock, 
-  DollarSign, 
+import {
+  Clock,
+  DollarSign,
   AlertTriangle,
   ArrowDownRight,
-  Tv, 
-  ShoppingCart, 
-  Fuel, 
-  Heart, 
-  BookOpen, 
-  Home, 
+  Tv,
+  ShoppingCart,
+  Fuel,
+  Heart,
+  BookOpen,
+  Home,
   HelpCircle,
   X,
   ArrowRight
 } from 'lucide-react'
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer, 
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
   Cell,
   LineChart,
   Line
@@ -43,7 +43,7 @@ import {
 
 export type PeriodoFiltro = 'hoje' | 'ontem' | '7_dias' | '14_dias' | 'este_mes' | 'mes_passado' | 'personalizado'
 
-export type TipoComparacao = 
+export type TipoComparacao =
   | 'este_mes_vs_mes_passado'
   | 'esta_semana_vs_semana_passada'
   | 'este_ano_vs_ano_passado'
@@ -58,8 +58,8 @@ const formatarDataLocal = (data: Date): string => {
 }
 
 const obterDatasPorPeriodo = (
-  periodo: PeriodoFiltro, 
-  personalizadoInicio?: string, 
+  periodo: PeriodoFiltro,
+  personalizadoInicio?: string,
   personalizadoFim?: string
 ) => {
   const hoje = new Date()
@@ -224,7 +224,7 @@ export const Dashboard: React.FC = () => {
 
   const handleFiltroPeriodoChange = (newPeriod: PeriodoFiltro) => {
     setFiltroPeriodo(newPeriod)
-    
+
     // Mapeamento automático de comparativo com base no filtro de período
     if (newPeriod === '7_dias') {
       setFiltroComparativo('ultimos_7_dias_vs_7_anteriores')
@@ -312,16 +312,16 @@ export const Dashboard: React.FC = () => {
 
   // 6. Evolução dos Gastos no período (LineChart)
   // Obter inicio e fim real do período selecionado
-  const { startDate, endDate } = filtroPeriodo === 'personalizado' 
+  const { startDate, endDate } = filtroPeriodo === 'personalizado'
     ? { startDate: personalizadoInicio, endDate: personalizadoFim }
     : obterDatasPorPeriodo(filtroPeriodo)
-  
+
   const diasPeriodo = gerarDiasDoPeriodo(startDate, endDate)
-  
+
   const evolutionData = diasPeriodo.map(dia => {
     const txsDoDia = ultimasTransactions.filter(tx => tx.date === dia)
     const totalDia = txsDoDia.reduce((acc, tx) => acc + Number(tx.amount), 0)
-    
+
     // Categorias daquele dia
     const catMap: Record<string, number> = {}
     txsDoDia.forEach(tx => {
@@ -373,7 +373,7 @@ export const Dashboard: React.FC = () => {
 
       {/* Conteúdo scrollável com fundo geral #F4F5F7 */}
       <main className="flex-1 overflow-y-auto p-6 bg-[#F4F5F7] flex flex-col gap-6">
-        
+
         {/* Banner de Erros do Banco */}
         {dbError && (
           <div className="p-4 bg-[#FEE2E2] border border-[#FCA5A5]/40 rounded-[10px] text-xs font-medium text-[#EF4444] flex items-start gap-2.5 relative animate-in fade-in duration-200">
@@ -381,7 +381,7 @@ export const Dashboard: React.FC = () => {
             <div className="flex-1 pr-6 leading-relaxed">
               {dbError}
             </div>
-            <button 
+            <button
               onClick={() => setDbError(null)}
               className="absolute top-3 right-3 text-[#EF4444] hover:opacity-80 cursor-pointer"
             >
@@ -396,7 +396,7 @@ export const Dashboard: React.FC = () => {
             <h2 className="text-xs font-bold text-[#111827] uppercase tracking-wider">Filtro de Período</h2>
             <p className="text-[11px] text-[#9CA3AF] font-semibold">Defina o intervalo de datas para recalcular os dados</p>
           </div>
-          
+
           <div className="flex flex-wrap items-center gap-3">
             <select
               value={filtroPeriodo}
@@ -461,7 +461,7 @@ export const Dashboard: React.FC = () => {
           <>
             {/* LINHA 1: 3 cards de métricas baseados no banco */}
             <section className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              
+
               {/* Card 1: Total gasto */}
               <div className="bg-white border border-[#E8E8EE] rounded-[14px] p-[16px_18px] shadow-sm flex items-center justify-between hover:shadow-md transition-all duration-200 group">
                 <div className="flex flex-col gap-1.5">
@@ -486,9 +486,8 @@ export const Dashboard: React.FC = () => {
                   <span className="text-[11px] font-bold text-[#9CA3AF] uppercase tracking-wider">
                     Ainda pode gastar
                   </span>
-                  <span className={`text-[22px] font-extrabold leading-none ${
-                    saldoDisponivel >= 0 ? 'text-[#111827]' : 'text-[#EF4444]'
-                  }`}>
+                  <span className={`text-[22px] font-extrabold leading-none ${saldoDisponivel >= 0 ? 'text-[#111827]' : 'text-[#EF4444]'
+                    }`}>
                     R$ {saldoDisponivel.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </span>
                   <span className="text-[11px] font-semibold text-[#9CA3AF] mt-0.5">
@@ -515,9 +514,8 @@ export const Dashboard: React.FC = () => {
                     </span>
                   )}
                 </div>
-                <div className={`w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 ${
-                  maiorGastoCat ? 'bg-[#FEE2E2] text-[#EF4444]' : 'bg-slate-100 text-slate-400'
-                }`}>
+                <div className={`w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 ${maiorGastoCat ? 'bg-[#FEE2E2] text-[#EF4444]' : 'bg-slate-100 text-slate-400'
+                  }`}>
                   <AlertTriangle className="w-5 h-5" />
                 </div>
               </div>
@@ -533,7 +531,7 @@ export const Dashboard: React.FC = () => {
                   Total gasto por dia — passe o mouse para ver o detalhe por categoria
                 </p>
               </div>
-              
+
               {ultimasTransactions.length > 0 ? (
                 <div className="h-[260px] w-full mt-2">
                   <ResponsiveContainer width="100%" height="100%">
@@ -542,26 +540,26 @@ export const Dashboard: React.FC = () => {
                       margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
-                      <XAxis 
-                        dataKey="dateDisplay" 
-                        stroke="#9CA3AF" 
-                        fontSize={10} 
-                        tickLine={false} 
+                      <XAxis
+                        dataKey="dateDisplay"
+                        stroke="#9CA3AF"
+                        fontSize={10}
+                        tickLine={false}
                         axisLine={false}
                         minTickGap={15}
                       />
-                      <YAxis 
-                        stroke="#9CA3AF" 
-                        fontSize={10} 
-                        tickLine={false} 
-                        axisLine={false} 
+                      <YAxis
+                        stroke="#9CA3AF"
+                        fontSize={10}
+                        tickLine={false}
+                        axisLine={false}
                         tickFormatter={(val) => `R$ ${val}`}
                       />
                       <Tooltip content={<CustomLineTooltip />} />
-                      <Line 
-                        type="monotone" 
-                        dataKey="total" 
-                        stroke="#7F77DD" 
+                      <Line
+                        type="monotone"
+                        dataKey="total"
+                        stroke="#7F77DD"
                         strokeWidth={3}
                         dot={{ fill: '#7F77DD', strokeWidth: 2, r: 3 }}
                         activeDot={{ r: 6, fill: '#534AB7', stroke: '#fff', strokeWidth: 2 }}
@@ -626,7 +624,7 @@ export const Dashboard: React.FC = () => {
                   Categorias ordenadas do maior para o menor gasto no período
                 </p>
               </div>
-              
+
               {barChartData.length > 0 ? (
                 <div className="h-[260px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
@@ -637,28 +635,28 @@ export const Dashboard: React.FC = () => {
                       barSize={24}
                     >
                       <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" horizontal={true} vertical={false} />
-                      <XAxis 
+                      <XAxis
                         type="number"
-                        stroke="#9CA3AF" 
-                        fontSize={10} 
-                        tickLine={false} 
+                        stroke="#9CA3AF"
+                        fontSize={10}
+                        tickLine={false}
                         axisLine={false}
                         tickFormatter={(val) => `R$ ${val}`}
                       />
-                      <YAxis 
-                        dataKey="name" 
+                      <YAxis
+                        dataKey="name"
                         type="category"
-                        stroke="#111827" 
+                        stroke="#111827"
                         fontSize={11}
                         fontWeight={600}
-                        tickLine={false} 
-                        axisLine={false} 
+                        tickLine={false}
+                        axisLine={false}
                         width={90}
                       />
-                      <Tooltip 
+                      <Tooltip
                         cursor={{ fill: '#F9FAFB' }}
-                        contentStyle={{ 
-                          backgroundColor: '#FFFFFF', 
+                        contentStyle={{
+                          backgroundColor: '#FFFFFF',
                           borderColor: '#E8E8EE',
                           borderRadius: '8px',
                           fontSize: '11px',
@@ -693,7 +691,7 @@ export const Dashboard: React.FC = () => {
                     Todos os lançamentos do período selecionado
                   </p>
                 </div>
-                
+
                 <button
                   onClick={() => navigate('/historico')}
                   className="text-xs font-bold text-[#7F77DD] hover:text-[#534AB7] flex items-center gap-1.5 transition-colors cursor-pointer"
@@ -708,10 +706,10 @@ export const Dashboard: React.FC = () => {
                   {ultimasTransactions.map((tx) => {
                     const TxIcon = getCategoryIcon(tx.categories?.name || '')
                     const iconStyle = getCategoryIconBg(tx.categories?.name || '')
-                    
+
                     return (
-                      <div 
-                        key={tx.id} 
+                      <div
+                        key={tx.id}
                         className="flex items-center justify-between py-3 first:pt-0 last:pb-0 hover:bg-[#F9FAFB]/50 px-1 rounded-[8px] transition-colors"
                       >
                         <div className="flex items-center gap-3.5">
@@ -733,7 +731,7 @@ export const Dashboard: React.FC = () => {
                         <div className="flex items-center gap-4">
                           {/* Badge de Origem */}
                           <Badge variant={tx.source} />
-                          
+
                           {/* Valor em vermelho */}
                           <span className="text-sm font-bold text-[#EF4444] flex items-center gap-0.5">
                             <ArrowDownRight className="w-3.5 h-3.5 shrink-0" />

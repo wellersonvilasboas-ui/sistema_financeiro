@@ -29,9 +29,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     })
 
     // 2. Escutar mudanças no estado de autenticação
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null)
       setLoading(false)
+
+      if (event === 'PASSWORD_RECOVERY') {
+        console.log('[Auth] Usuário acessou pelo link de recuperação de senha.')
+        localStorage.setItem('password_recovery_mode', 'true')
+        window.location.href = '/configuracoes'
+      }
     })
 
     return () => {

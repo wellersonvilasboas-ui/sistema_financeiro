@@ -25,6 +25,7 @@ import {
   X,
   PlusCircle
 } from 'lucide-react'
+import { formatCurrency, getCurrencySymbol } from '../utils/format'
 
 export const Historico: React.FC = () => {
   // Estados de dados
@@ -418,7 +419,7 @@ export const Historico: React.FC = () => {
                       <td className="p-4 text-sm font-extrabold text-[#EF4444] whitespace-nowrap">
                         <span className="inline-flex items-center gap-0.5">
                           <ArrowDownRight className="w-3.5 h-3.5 shrink-0" />
-                          -R$ {tx.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          -{formatCurrency(tx.amount)}
                         </span>
                       </td>
                       <td className="p-4">
@@ -487,7 +488,7 @@ export const Historico: React.FC = () => {
               {/* Valor + Categoria (Duas colunas) */}
               <div className="grid grid-cols-2 gap-3.5">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-[#111827]">Valor (R$)</label>
+                  <label className="text-xs font-semibold text-[#111827]">Valor ({getCurrencySymbol()})</label>
                   <input
                     type="number"
                     step="0.01"
@@ -599,7 +600,7 @@ export const Historico: React.FC = () => {
               {/* Valor + Categoria (Duas colunas) */}
               <div className="grid grid-cols-2 gap-3.5">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-[#111827]">Valor (R$)</label>
+                  <label className="text-xs font-semibold text-[#111827]">Valor ({getCurrencySymbol()})</label>
                   <input
                     type="number"
                     step="0.01"
