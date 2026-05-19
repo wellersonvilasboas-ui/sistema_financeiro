@@ -55,3 +55,40 @@ export async function updatePassword(password: string): Promise<void> {
     throw new Error(`Falha ao alterar a senha: ${error.message}`)
   }
 }
+
+/**
+ * Busca o perfil do usuário logado (incluindo o whatsapp_number)
+ */
+export async function getProfile(userId: string) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', userId)
+    .single()
+
+  // Se não existir perfil, retorna null ao invés de lançar erro (para tratarmos como inserção na hora de salvar)
+  if (error && error.code !== 'PGRST116') {
+    if (import.meta.env.DEV) console.error('[profile.service] Erro ao buscar perfil:', error)
+    throw new Error(`Falha ao buscar perfil: ${error.message}`)
+  }
+
+  return data
+}
+
+/**
+ * Salva ou atualiza o número de WhatsApp do usuário no banco de dados.
+ */
+export async function updateWhatsAppNumber(userId: string, whatsappNumber: string | null): Promise<void> {
+  const { error } = await supabase
+    .from('profiles')
+    .upsert({
+      id: userId,
+      whatsapp_number: whatsappNumber,
+      updated_at: new Date().toISOString()
+    })
+
+  if (error) {
+    if (import.meta.env.DEV) console.error('[profile.service] Erro ao atualizar WhatsApp:', error)
+    throw new Error(`Falha ao salvar número do WhatsApp: ${error.message}`)
+  }
+}

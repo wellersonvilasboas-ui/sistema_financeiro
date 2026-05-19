@@ -26,5 +26,6 @@ export interface Budget {
 export interface Profile {
   id: string
   avatar_url: string | null
+  whatsapp_number?: string | null
   updated_at: string
 }
