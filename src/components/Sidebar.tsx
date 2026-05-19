@@ -6,7 +6,8 @@ import {
   LineChart, 
   Target, 
   Settings, 
-  LogOut 
+  LogOut,
+  Sparkles
 } from 'lucide-react'
 
 export const Sidebar: React.FC = () => {
@@ -35,6 +36,13 @@ export const Sidebar: React.FC = () => {
       icon: Target,
       iconBg: 'bg-[#DCFCE7]',
       iconColor: 'text-[#16A34A]'
+    },
+    {
+      path: '/insights',
+      label: 'Insights',
+      icon: Sparkles,
+      iconBg: 'bg-[#F3E8FF]',
+      iconColor: 'text-[#A855F7]'
     },
     {
       path: '/configuracoes',

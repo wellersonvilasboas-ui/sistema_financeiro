@@ -5,6 +5,7 @@ import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Historico from './pages/Historico'
 import Metas from './pages/Metas'
+import Insights from './pages/Insights'
 import Configuracoes from './pages/Configuracoes'
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/historico" element={<Historico />} />
             <Route path="/metas" element={<Metas />} />
+            <Route path="/insights" element={<Insights />} />
             <Route path="/configuracoes" element={<Configuracoes />} />
           </Route>
 
