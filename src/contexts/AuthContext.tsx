@@ -45,6 +45,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [])
 
+  // 3. Sincronizar moeda preferida quando o usuário logar
+  useEffect(() => {
+    if (user?.id) {
+      import('../services/profile').then(({ getProfile }) => {
+        getProfile(user.id).then(profile => {
+          if (profile?.preferred_currency) {
+            import('../utils/format').then(({ setCurrency }) => {
+              setCurrency(profile.preferred_currency as 'BRL' | 'USD')
+            })
+          }
+        }).catch(err => {
+          console.error('[AuthContext] Falha ao carregar perfil para sincronizar moeda:', err)
+        })
+      })
+    }
+  }, [user?.id])
+
   const handleLogout = async () => {
     try {
       setLoading(true)

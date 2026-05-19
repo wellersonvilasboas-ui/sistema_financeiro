@@ -27,5 +27,6 @@ export interface Profile {
   id: string
   avatar_url: string | null
   whatsapp_number?: string | null
+  preferred_currency?: 'BRL' | 'USD'
   updated_at: string
 }

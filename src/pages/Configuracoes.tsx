@@ -11,7 +11,8 @@ import {
 import type { Category } from '../types'
 import { Edit2, Trash2, Plus, FolderOpen, Loader2, AlertCircle, CheckCircle2, X, Camera, UserCircle, Lock } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
-import { uploadAvatar, updateProfileAvatar, updatePassword, getProfile, updateWhatsAppNumber } from '../services/profile'
+import { uploadAvatar, updateProfileAvatar, updatePassword, getProfile, updateWhatsAppNumber, updateCurrency } from '../services/profile'
+import { getCurrency, setCurrency } from '../utils/format'
 
 export const Configuracoes: React.FC = () => {
   const { user } = useAuth()
@@ -37,6 +38,11 @@ export const Configuracoes: React.FC = () => {
   const [whatsappNumber, setWhatsappNumber] = useState('')
   const [whatsappLoading, setWhatsappLoading] = useState(false)
   const [whatsappError, setWhatsappError] = useState<string | null>(null)
+
+  // Currency Logic
+  const [preferredCurrency, setPreferredCurrency] = useState<'BRL' | 'USD'>(getCurrency())
+  const [currencyLoading, setCurrencyLoading] = useState(false)
+  const [currencyError, setCurrencyError] = useState<string | null>(null)
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -90,6 +96,23 @@ export const Configuracoes: React.FC = () => {
       setWhatsappError(err.message || 'Falha ao salvar o número do WhatsApp.')
     } finally {
       setWhatsappLoading(false)
+    }
+  }
+
+  const handleCurrencySubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setCurrencyError(null)
+
+    setCurrencyLoading(true)
+    try {
+      if (!user) throw new Error('Usuário não autenticado.')
+      await updateCurrency(user.id, preferredCurrency)
+      setCurrency(preferredCurrency) // Atualiza no localStorage para refletir na interface instantaneamente
+      setSuccessMessage('Moeda principal atualizada com sucesso!')
+    } catch (err: any) {
+      setCurrencyError(err.message || 'Falha ao salvar a moeda principal.')
+    } finally {
+      setCurrencyLoading(false)
     }
   }
 
@@ -165,6 +188,9 @@ export const Configuracoes: React.FC = () => {
       getProfile(user.id).then(profile => {
         if (profile?.whatsapp_number) {
           setWhatsappNumber(profile.whatsapp_number)
+        }
+        if (profile?.preferred_currency) {
+          setPreferredCurrency(profile.preferred_currency as 'BRL' | 'USD')
         }
       }).catch(err => {
         console.error('Failed to load profile:', err)
@@ -426,6 +452,66 @@ export const Configuracoes: React.FC = () => {
               >
                 {passwordLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 Alterar senha
+              </button>
+            </div>
+          </form>
+        </section>
+
+        {/* Bloco de Integração WhatsApp */}
+        <section className="bg-white border border-[#E8E8EE] rounded-[14px] shadow-sm p-6 flex flex-col gap-5">
+          <div className="flex items-center gap-3 pb-4 border-b border-[#E8E8EE]">
+            <div className="w-10 h-10 rounded-[10px] bg-[#EEEDFE] text-[#7F77DD] flex items-center justify-center">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-[#111827]">Moeda Principal</h2>
+              <p className="text-xs text-[#9CA3AF] font-medium mt-0.5">
+                Escolha a moeda padrão para o sistema e para o seu robô (Real ou Dólar).
+              </p>
+            </div>
+          </div>
+
+          {currencyError && (
+            <div className="p-4 bg-[#FEE2E2] border border-[#FCA5A5]/40 rounded-[10px] text-xs font-medium text-[#EF4444] flex items-start gap-2.5 relative animate-in fade-in duration-200">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <div className="flex-1 pr-6 leading-relaxed">
+                {currencyError}
+              </div>
+              <button 
+                type="button"
+                onClick={() => setCurrencyError(null)}
+                className="absolute top-3 right-3 text-[#EF4444] hover:opacity-80 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
+          <form onSubmit={handleCurrencySubmit} className="flex flex-col gap-4 max-w-md">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-[#111827]">Moeda do Painel e WhatsApp</label>
+              <select
+                value={preferredCurrency}
+                onChange={(e) => {
+                  setPreferredCurrency(e.target.value as 'BRL' | 'USD')
+                  if (currencyError) setCurrencyError(null)
+                }}
+                className="w-full px-3 py-2 border border-[#E8E8EE] rounded-[10px] text-sm text-[#111827] bg-[#F4F5F7]/30 focus:outline-none focus:border-[#7F77DD] focus:ring-1 focus:ring-[#7F77DD] transition-all cursor-pointer"
+                disabled={currencyLoading}
+              >
+                <option value="BRL">Real Brasileiro (R$)</option>
+                <option value="USD">Dólar Americano ($)</option>
+              </select>
+            </div>
+
+            <div className="flex justify-start mt-2">
+              <button
+                type="submit"
+                disabled={currencyLoading}
+                className="px-5 py-2 bg-[#7F77DD] hover:bg-[#534AB7] text-white rounded-[999px] text-xs font-semibold flex items-center gap-1.5 transition-all duration-200 cursor-pointer shadow-sm shadow-[#7F77DD]/20 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {currencyLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                Salvar Preferência
               </button>
             </div>
           </form>

@@ -92,3 +92,21 @@ export async function updateWhatsAppNumber(userId: string, whatsappNumber: strin
     throw new Error(`Falha ao salvar número do WhatsApp: ${error.message}`)
   }
 }
+
+/**
+ * Atualiza a moeda preferida do usuário no banco de dados.
+ */
+export async function updateCurrency(userId: string, currency: 'BRL' | 'USD'): Promise<void> {
+  const { error } = await supabase
+    .from('profiles')
+    .upsert({
+      id: userId,
+      preferred_currency: currency,
+      updated_at: new Date().toISOString()
+    })
+
+  if (error) {
+    if (import.meta.env.DEV) console.error('[profile.service] Erro ao atualizar Moeda:', error)
+    throw new Error(`Falha ao salvar preferência de moeda: ${error.message}`)
+  }
+}
