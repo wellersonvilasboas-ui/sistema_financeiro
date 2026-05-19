@@ -1,6 +1,7 @@
 export interface Category {
   id: number
   name: string
+  type: 'despesa' | 'receita'
   created_at: string
 }
 
@@ -9,6 +10,7 @@ export interface Transaction {
   description: string
   amount: number
   category_id: number
+  type: 'despesa' | 'receita'
   date: string
   source: 'manual' | 'whatsapp'
   created_at: string

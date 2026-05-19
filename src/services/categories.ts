@@ -21,7 +21,7 @@ export async function getCategories(): Promise<Category[]> {
  * Cria uma nova categoria no banco de dados
  * @param name Nome da categoria
  */
-export async function createCategory(name: string): Promise<Category> {
+export async function createCategory(name: string, type: 'despesa' | 'receita' = 'despesa'): Promise<Category> {
   const trimmedName = name.trim()
   if (!trimmedName) {
     throw new Error('O nome da categoria é obrigatório e não pode conter apenas espaços.')
@@ -29,7 +29,7 @@ export async function createCategory(name: string): Promise<Category> {
 
   const { data, error } = await supabase
     .from('categories')
-    .insert([{ name: trimmedName }])
+    .insert([{ name: trimmedName, type }])
     .select()
     .single()
 

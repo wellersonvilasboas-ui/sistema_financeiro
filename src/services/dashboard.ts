@@ -3,6 +3,7 @@ import { getCategories } from './categories'
 import { getBudgets } from './budgets'
 import { getTransactions } from './transactions'
 import type { TransactionWithCategory } from './transactions'
+import type { Category } from '../types'
 
 export interface GastoCategoria {
   category_id: number
@@ -216,12 +217,13 @@ export async function getComparacao(
 }
 
 /**
- * Soma total de transações no intervalo especificado
+ * Soma total de transações no intervalo especificado (apenas despesas)
  */
 export async function getTotalGastoRange(startDate: string, endDate: string): Promise<number> {
   const { data, error } = await supabase
     .from('transactions')
     .select('amount')
+    .eq('type', 'despesa')
     .gte('date', startDate)
     .lte('date', endDate)
 
@@ -234,23 +236,58 @@ export async function getTotalGastoRange(startDate: string, endDate: string): Pr
 }
 
 /**
- * Total gasto agrupado por categoria no intervalo de datas especificado
+ * Soma total de transações no intervalo especificado (apenas receitas)
+ */
+export async function getTotalReceitaRange(startDate: string, endDate: string): Promise<number> {
+  const { data, error } = await supabase
+    .from('transactions')
+    .select('amount')
+    .eq('type', 'receita')
+    .gte('date', startDate)
+    .lte('date', endDate)
+
+  if (error) { if (import.meta.env.DEV) console.error('[dashboard.service] Erro ao buscar total receita no intervalo:', error)
+    throw new Error(`Falha ao calcular receitas: ${error.message}`)
+  }
+
+  const total = (data || []).reduce((acc, row) => acc + Number(row.amount), 0)
+  return total
+}
+
+/**
+ * Total gasto agrupado por categoria no intervalo de datas especificado (apenas despesas)
  */
 export async function getGastoPorCategoriaRange(startDate: string, endDate: string): Promise<GastoCategoria[]> {
-  // Buscamos categorias, orçamentos e transações do intervalo concorrentemente
-  const [categories, budgets, { data: transactions, error: txError }] = await Promise.all([
-    getCategories(),
+  // Buscamos categorias (somente do tipo despesa), orçamentos e transações do intervalo concorrentemente
+  const [
+    { data: categoriesData, error: catError },
+    budgets,
+    { data: transactions, error: txError }
+  ] = await Promise.all([
+    supabase
+      .from('categories')
+      .select('*')
+      .eq('type', 'despesa')
+      .order('id', { ascending: true }),
     getBudgets(),
     supabase
       .from('transactions')
       .select('category_id, amount')
+      .eq('type', 'despesa')
       .gte('date', startDate)
       .lte('date', endDate)
   ])
 
+  if (catError) {
+    if (import.meta.env.DEV) console.error('[dashboard.service] Erro ao buscar categorias de despesa:', catError)
+    throw new Error(`Falha ao carregar categorias: ${catError.message}`)
+  }
+
   if (txError) { if (import.meta.env.DEV) console.error('[dashboard.service] Erro ao buscar transações por categoria no intervalo:', txError)
     throw new Error(`Falha ao calcular gastos por categoria: ${txError.message}`)
   }
+
+  const categories = (categoriesData as Category[]) || []
 
   // Agrupamos os gastos no Javascript
   const gastosMap: Record<number, number> = {}
@@ -259,7 +296,7 @@ export async function getGastoPorCategoriaRange(startDate: string, endDate: stri
     gastosMap[cid] = (gastosMap[cid] || 0) + Number(tx.amount)
   })
 
-  // Mapeamos a resposta para conter todas as categorias cadastradas no sistema
+  // Mapeamos a resposta para conter todas as categorias de despesa cadastradas no sistema
   const result: GastoCategoria[] = categories.map((cat) => {
     const budget = budgets.find((b) => b.category_id === cat.id)
     return {

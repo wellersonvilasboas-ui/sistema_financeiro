@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   getTotalOrcado,
   getTotalGastoRange,
+  getTotalReceitaRange,
   getGastoPorCategoriaRange,
   getTransactionsRange,
   getComparacaoRange
@@ -14,10 +15,9 @@ import {
 import type { GastoCategoria } from '../services/dashboard'
 import type { TransactionWithCategory } from '../services/transactions'
 import {
-  Clock,
   DollarSign,
-  AlertTriangle,
   ArrowDownRight,
+  ArrowUpRight,
   Tv,
   ShoppingCart,
   Fuel,
@@ -39,7 +39,9 @@ import {
   ResponsiveContainer,
   Cell,
   LineChart,
-  Line
+  Line,
+  PieChart,
+  Pie
 } from 'recharts'
 
 export type PeriodoFiltro = 'hoje' | 'ontem' | '7_dias' | '14_dias' | 'este_mes' | 'mes_passado' | 'personalizado'
@@ -150,7 +152,7 @@ export const Dashboard: React.FC = () => {
 
   // Estados de dados do Dashboard
   const [totalGastoMes, setTotalGastoMes] = useState<number>(0)
-  const [totalOrcado, setTotalOrcado] = useState<number>(0)
+  const [totalReceitaMes, setTotalReceitaMes] = useState<number>(0)
   const [gastosCategorias, setGastosCategorias] = useState<GastoCategoria[]>([])
   const [ultimasTransactions, setUltimasTransactions] = useState<TransactionWithCategory[]>([])
 
@@ -168,6 +170,9 @@ export const Dashboard: React.FC = () => {
     if (name.includes('saúde') || name.includes('médico')) return Heart
     if (name.includes('educação') || name.includes('curso')) return BookOpen
     if (name.includes('moradia') || name.includes('aluguel')) return Home
+    if (name.includes('salário') || name.includes('comissão') || name.includes('comissões')) return DollarSign
+    if (name.includes('venda') || name.includes('serviço')) return ShoppingCart
+    if (name.includes('investimento')) return ArrowUpRight
     return HelpCircle
   }
 
@@ -179,6 +184,9 @@ export const Dashboard: React.FC = () => {
     if (name.includes('saúde') || name.includes('médico')) return 'bg-emerald-50 text-emerald-600'
     if (name.includes('educação') || name.includes('curso')) return 'bg-blue-50 text-blue-600'
     if (name.includes('moradia') || name.includes('aluguel')) return 'bg-purple-50 text-purple-600'
+    if (name.includes('salário') || name.includes('comissão') || name.includes('venda') || name.includes('serviço') || name.includes('investimento')) {
+      return 'bg-emerald-50 text-emerald-600'
+    }
     return 'bg-slate-50 text-slate-600'
   }
 
@@ -200,11 +208,13 @@ export const Dashboard: React.FC = () => {
     try {
       const [
         gasto,
-        orcado,
+        receita,
+        _orcado,
         gastosCat,
         txs
       ] = await Promise.all([
         getTotalGastoRange(start, end),
+        getTotalReceitaRange(start, end),
         getTotalOrcado(),
         getGastoPorCategoriaRange(start, end),
         getTransactionsRange(start, end),
@@ -212,7 +222,7 @@ export const Dashboard: React.FC = () => {
       ])
 
       setTotalGastoMes(gasto)
-      setTotalOrcado(orcado)
+      setTotalReceitaMes(receita)
       setGastosCategorias(gastosCat)
       setUltimasTransactions(txs)
     } catch (err: any) {
@@ -265,7 +275,7 @@ export const Dashboard: React.FC = () => {
 
 
   // 2. Saldo disponível (orçado total - gasto no período)
-  const saldoDisponivel = totalOrcado - totalGastoMes
+  const saldoDisponivel = totalReceitaMes - totalGastoMes
 
   // 3. Maior gasto
   let maiorGastoCat: GastoCategoria | null = null
@@ -274,18 +284,26 @@ export const Dashboard: React.FC = () => {
     if (maiorGastoCat.gasto === 0) maiorGastoCat = null
   }
 
+  // Curated premium color palette for charts
+  const chartColorsPalette = [
+    '#7F77DD', // Roxo/Violeta principal
+    '#10B981', // Verde Esmeralda
+    '#0EA5E9', // Sky Blue
+    '#F59E0B', // Amber
+    '#EC4899', // Pink
+    '#8B5CF6', // Purple
+    '#EF4444', // Red
+    '#14B8A6', // Teal
+    '#F97316', // Orange
+    '#6366F1'  // Indigo
+  ]
+
   // 4. Gráfico de barras horizontais por categoria
   const barChartData = gastosCategorias
     .filter(gc => gc.gasto > 0)
     .sort((a, b) => b.gasto - a.gasto) // Maior para menor
-    .map((gc) => {
-      let barColor = '#9CA3AF'
-      if (gc.limite !== null) {
-        const percent = (gc.gasto / gc.limite) * 100
-        barColor = percent > 90 ? '#EF4444' : '#7F77DD'
-      } else {
-        barColor = '#7F77DD' // Default se tiver gasto mas sem limite (pra ficar bonito)
-      }
+    .map((gc, index) => {
+      const barColor = chartColorsPalette[index % chartColorsPalette.length]
       return {
         name: gc.category_name,
         value: gc.gasto,
@@ -320,7 +338,7 @@ export const Dashboard: React.FC = () => {
   const diasPeriodo = gerarDiasDoPeriodo(startDate, endDate)
 
   const evolutionData = diasPeriodo.map(dia => {
-    const txsDoDia = ultimasTransactions.filter(tx => tx.date === dia)
+    const txsDoDia = ultimasTransactions.filter(tx => tx.date === dia && tx.type === 'despesa')
     const totalDia = txsDoDia.reduce((acc, tx) => acc + Number(tx.amount), 0)
 
     // Categorias daquele dia
@@ -463,61 +481,69 @@ export const Dashboard: React.FC = () => {
             {/* LINHA 1: 3 cards de métricas baseados no banco */}
             <section className="grid grid-cols-1 md:grid-cols-3 gap-5">
 
-              {/* Card 1: Total gasto */}
+              {/* Card 1: Total Receitas */}
               <div className="bg-white border border-[#E8E8EE] rounded-[14px] p-[16px_18px] shadow-sm flex items-center justify-between hover:shadow-md transition-all duration-200 group">
                 <div className="flex flex-col gap-1.5">
                   <span className="text-[11px] font-bold text-[#9CA3AF] uppercase tracking-wider">
-                    Você gastou
+                    Total Receitas
                   </span>
-                  <span className="text-[22px] font-extrabold text-[#111827] leading-none">
-                    {formatCurrency(totalGastoMes)}
-                  </span>
-                  <span className="text-[11px] font-semibold text-[#9CA3AF] mt-0.5">
-                    neste período
-                  </span>
-                </div>
-                <div className="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 bg-[#EEEDFE] text-[#7F77DD]">
-                  <Clock className="w-5 h-5" />
-                </div>
-              </div>
-
-              {/* Card 2: Saldo disponível */}
-              <div className="bg-white border border-[#E8E8EE] rounded-[14px] p-[16px_18px] shadow-sm flex items-center justify-between hover:shadow-md transition-all duration-200 group">
-                <div className="flex flex-col gap-1.5">
-                  <span className="text-[11px] font-bold text-[#9CA3AF] uppercase tracking-wider">
-                    Ainda pode gastar
-                  </span>
-                  <span className={`text-[22px] font-extrabold leading-none ${saldoDisponivel >= 0 ? 'text-[#111827]' : 'text-[#EF4444]'
-                    }`}>
-                    {formatCurrency(saldoDisponivel)}
+                  <span className="text-[22px] font-extrabold text-[#15803D] leading-none">
+                    {formatCurrency(totalReceitaMes)}
                   </span>
                   <span className="text-[11px] font-semibold text-[#9CA3AF] mt-0.5">
-                    de {formatCurrency(totalOrcado)} em metas definidas
+                    recebido no período
                   </span>
                 </div>
                 <div className="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 bg-[#DCFCE7] text-[#15803D]">
-                  <DollarSign className="w-5 h-5" />
+                  <ArrowUpRight className="w-5 h-5" />
                 </div>
               </div>
 
-              {/* Card 3: Maior gasto */}
+              {/* Card 2: Total Despesas */}
               <div className="bg-white border border-[#E8E8EE] rounded-[14px] p-[16px_18px] shadow-sm flex items-center justify-between hover:shadow-md transition-all duration-200 group">
-                <div className="flex flex-col gap-1.5 max-w-[70%]">
+                <div className="flex flex-col gap-1.5">
                   <span className="text-[11px] font-bold text-[#9CA3AF] uppercase tracking-wider">
-                    Onde foi mais
+                    Total Despesas
                   </span>
-                  <span className="text-[22px] font-extrabold text-[#111827] leading-none truncate">
-                    {maiorGastoCat ? maiorGastoCat.category_name : 'Nenhum gasto ainda'}
+                  <span className="text-[22px] font-extrabold text-[#7F77DD] leading-none">
+                    {formatCurrency(totalGastoMes)}
                   </span>
-                  {maiorGastoCat && (
-                    <span className="text-[11px] font-semibold text-[#9CA3AF] mt-0.5">
-                      {formatCurrency(maiorGastoCat.gasto)} gastos nesta categoria
-                    </span>
-                  )}
+                  <span className="text-[11px] font-semibold text-[#9CA3AF] mt-0.5">
+                    gasto no período
+                  </span>
                 </div>
-                <div className={`w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 ${maiorGastoCat ? 'bg-[#FEE2E2] text-[#EF4444]' : 'bg-slate-100 text-slate-400'
+                <div className="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 bg-[#EEEDFE] text-[#7F77DD]">
+                  <ArrowDownRight className="w-5 h-5" />
+                </div>
+              </div>
+
+              {/* Card 3: Saldo Disponível */}
+              <div className={`border rounded-[14px] p-[16px_18px] shadow-sm flex items-center justify-between hover:shadow-md transition-all duration-200 group ${
+                saldoDisponivel >= 0
+                  ? 'bg-white border-[#E8E8EE]'
+                  : 'bg-[#FEE2E2] border-[#FCA5A5]'
+              }`}>
+                <div className="flex flex-col gap-1.5">
+                  <span className={`text-[11px] font-bold uppercase tracking-wider ${
+                    saldoDisponivel >= 0 ? 'text-[#9CA3AF]' : 'text-[#EF4444]'
                   }`}>
-                  <AlertTriangle className="w-5 h-5" />
+                    Saldo Disponível
+                  </span>
+                  <span className={`text-[22px] font-extrabold leading-none ${
+                    saldoDisponivel >= 0 ? 'text-[#111827]' : 'text-[#EF4444]'
+                  }`}>
+                    {saldoDisponivel < 0 ? '-' : ''}{formatCurrency(Math.abs(saldoDisponivel))}
+                  </span>
+                  <span className={`text-[11px] font-semibold mt-0.5 ${
+                    saldoDisponivel >= 0 ? 'text-[#9CA3AF]' : 'text-[#EF4444]'
+                  }`}>
+                    {saldoDisponivel >= 0 ? 'saldo azul positivo' : 'saldo vermelho (déficit)'}
+                  </span>
+                </div>
+                <div className={`w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 ${
+                  saldoDisponivel >= 0 ? 'bg-[#DCFCE7] text-[#15803D]' : 'bg-[#EF4444] text-white shadow-sm'
+                }`}>
+                  <DollarSign className="w-5 h-5" />
                 </div>
               </div>
             </section>
@@ -615,71 +641,149 @@ export const Dashboard: React.FC = () => {
               </div>
             </section>
 
-            {/* Gastos por Categoria (Gráfico 3 Horizontal) */}
-            <section className="bg-white border border-[#E8E8EE] rounded-[14px] p-[16px_18px] shadow-sm w-full flex flex-col gap-4">
-              <div>
-                <h3 className="text-sm font-bold text-[#111827]">
-                  Onde seu dinheiro foi
-                </h3>
-                <p className="text-[11px] text-[#9CA3AF] font-semibold">
-                  Categorias ordenadas do maior para o menor gasto no período
-                </p>
-              </div>
+            {/* Gráficos de Categorias (Lado a Lado no Desktop) */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 md:gap-6 w-full">
+              
+              {/* Gastos por Categoria (Gráfico 3 Horizontal) */}
+              <section className="bg-white border border-[#E8E8EE] rounded-[14px] p-[16px_18px] shadow-sm flex flex-col gap-4">
+                <div>
+                  <h3 className="text-sm font-bold text-[#111827]">
+                    Onde seu dinheiro foi
+                  </h3>
+                  <p className="text-[11px] text-[#9CA3AF] font-semibold">
+                    Categorias ordenadas do maior para o menor gasto no período
+                  </p>
+                </div>
 
-              {barChartData.length > 0 ? (
-                <div className="h-[260px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={barChartData}
-                      layout="vertical"
-                      margin={{ top: 10, right: 30, left: 10, bottom: 0 }}
-                      barSize={24}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" horizontal={true} vertical={false} />
-                      <XAxis
-                        type="number"
-                        stroke="#9CA3AF"
-                        fontSize={10}
-                        tickLine={false}
-                        axisLine={false}
-                        tickFormatter={(val) => `${getCurrencySymbol()} ${val}`}
-                      />
-                      <YAxis
-                        dataKey="name"
-                        type="category"
-                        stroke="#111827"
-                        fontSize={11}
-                        fontWeight={600}
-                        tickLine={false}
-                        axisLine={false}
-                        width={90}
-                      />
-                      <Tooltip
-                        cursor={{ fill: '#F9FAFB' }}
-                        contentStyle={{
-                          backgroundColor: '#FFFFFF',
-                          borderColor: '#E8E8EE',
-                          borderRadius: '8px',
-                          fontSize: '11px',
-                          color: '#111827',
-                          fontWeight: 'bold'
-                        }}
-                        formatter={(val) => [`${formatCurrency(Number(val))}`, 'Gasto']}
-                      />
-                      <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-                        {barChartData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
+                {barChartData.length > 0 ? (
+                  <div className="h-[260px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={barChartData}
+                        layout="vertical"
+                        margin={{ top: 10, right: 30, left: 10, bottom: 0 }}
+                        barSize={20}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" horizontal={true} vertical={false} />
+                        <XAxis
+                          type="number"
+                          stroke="#9CA3AF"
+                          fontSize={10}
+                          tickLine={false}
+                          axisLine={false}
+                          tickFormatter={(val) => `${getCurrencySymbol()} ${val}`}
+                        />
+                        <YAxis
+                          dataKey="name"
+                          type="category"
+                          stroke="#111827"
+                          fontSize={11}
+                          fontWeight={600}
+                          tickLine={false}
+                          axisLine={false}
+                          width={95}
+                        />
+                        <Tooltip
+                          cursor={{ fill: '#F9FAFB' }}
+                          contentStyle={{
+                            backgroundColor: '#FFFFFF',
+                            borderColor: '#E8E8EE',
+                            borderRadius: '8px',
+                            fontSize: '11px',
+                            color: '#111827',
+                            fontWeight: 'bold'
+                          }}
+                          formatter={(val) => [`${formatCurrency(Number(val))}`, 'Gasto']}
+                        />
+                        <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                          {barChartData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <div className="h-[260px] flex items-center justify-center text-[#9CA3AF] text-xs font-semibold bg-[#F4F5F7]/30 border border-[#E8E8EE] border-dashed rounded-[10px]">
+                    📊 Nenhum gasto registrado neste período.
+                  </div>
+                )}
+              </section>
+
+              {/* [NOVO] Gráfico de Pizza de Distribuição Financeira */}
+              <section className="bg-white border border-[#E8E8EE] rounded-[14px] p-[16px_18px] shadow-sm flex flex-col gap-4">
+                <div>
+                  <h3 className="text-sm font-bold text-[#111827]">
+                    Distribuição dos Gastos (%)
+                  </h3>
+                  <p className="text-[11px] text-[#9CA3AF] font-semibold">
+                    Proporção de cada categoria em relação aos gastos totais
+                  </p>
                 </div>
-              ) : (
-                <div className="h-[220px] flex items-center justify-center text-[#9CA3AF] text-xs font-semibold bg-[#F4F5F7]/30 border border-[#E8E8EE] border-dashed rounded-[10px]">
-                  📊 Nenhum gasto registrado neste período.
-                </div>
-              )}
-            </section>
+
+                {barChartData.length > 0 ? (
+                  <div className="h-[260px] w-full flex flex-col sm:flex-row items-center justify-center gap-4">
+                    <div className="h-[200px] w-full sm:w-[50%]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={barChartData}
+                            dataKey="value"
+                            nameKey="name"
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={55}
+                            outerRadius={80}
+                            paddingAngle={3}
+                          >
+                            {barChartData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: '#FFFFFF',
+                              borderColor: '#E8E8EE',
+                              borderRadius: '8px',
+                              fontSize: '11px',
+                              color: '#111827',
+                              fontWeight: 'bold'
+                            }}
+                            formatter={(value, name) => {
+                              const totalGastoVal = barChartData.reduce((acc, curr) => acc + curr.value, 0)
+                              const percent = totalGastoVal > 0 ? ((Number(value) / totalGastoVal) * 100).toFixed(1) : '0'
+                              return [`${formatCurrency(Number(value))} (${percent}%)`, name]
+                            }}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+
+                    {/* Legenda Customizada com Cores e Porcentagens para visual Premium */}
+                    <div className="flex flex-col gap-2 max-h-[220px] overflow-y-auto w-full sm:w-[50%] pr-1 scrollbar-thin text-xs">
+                      {barChartData.map((entry, index) => {
+                        const totalGastoVal = barChartData.reduce((acc, curr) => acc + curr.value, 0)
+                        const percent = totalGastoVal > 0 ? ((entry.value / totalGastoVal) * 100).toFixed(0) : '0'
+                        return (
+                          <div key={index} className="flex items-center justify-between font-semibold">
+                            <div className="flex items-center gap-2 truncate">
+                              <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: entry.color }} />
+                              <span className="text-[#374151] truncate">{entry.name}</span>
+                            </div>
+                            <span className="text-[#111827] pl-2 shrink-0">{percent}%</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="h-[260px] flex items-center justify-center text-[#9CA3AF] text-xs font-semibold bg-[#F4F5F7]/30 border border-[#E8E8EE] border-dashed rounded-[10px]">
+                    🍕 Nenhum gasto registrado neste período.
+                  </div>
+                )}
+              </section>
+
+            </div>
 
             {/* Transações (Largura Total e lista todos do período) */}
             <section className="bg-white border border-[#E8E8EE] rounded-[14px] p-[16px_18px] shadow-sm w-full flex flex-col gap-4">
@@ -733,11 +837,18 @@ export const Dashboard: React.FC = () => {
                           {/* Badge de Origem */}
                           <Badge variant={tx.source} />
 
-                          {/* Valor em vermelho */}
-                          <span className="text-sm font-bold text-[#EF4444] flex items-center gap-0.5">
-                            <ArrowDownRight className="w-3.5 h-3.5 shrink-0" />
-                            -R$ {tx.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                          </span>
+                          {/* Valor dependendo do tipo */}
+                          {tx.type === 'receita' ? (
+                            <span className="text-sm font-bold text-[#15803D] flex items-center gap-0.5">
+                              <ArrowUpRight className="w-3.5 h-3.5 shrink-0" />
+                              +{formatCurrency(tx.amount)}
+                            </span>
+                          ) : (
+                            <span className="text-sm font-bold text-[#EF4444] flex items-center gap-0.5">
+                              <ArrowDownRight className="w-3.5 h-3.5 shrink-0" />
+                              -{formatCurrency(tx.amount)}
+                            </span>
+                          )}
                         </div>
                       </div>
                     )
@@ -745,7 +856,7 @@ export const Dashboard: React.FC = () => {
                 </div>
               ) : (
                 <div className="p-8 text-center text-[#9CA3AF] text-sm font-semibold border border-[#E8E8EE] border-dashed rounded-[10px] bg-[#F4F5F7]/30">
-                  📭 Nenhum gasto registrado neste período.
+                  📭 Nenhuma transação registrada neste período.
                 </div>
               )}
             </section>

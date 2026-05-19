@@ -19,6 +19,7 @@ import {
   Plus, 
   Calendar, 
   ArrowDownRight, 
+  ArrowUpRight,
   Loader2, 
   AlertCircle, 
   CheckCircle2, 
@@ -56,6 +57,7 @@ export const Historico: React.FC = () => {
   // Estados de filtros
   const [filterCategory, setFilterCategory] = useState<number>(0) // 0 = Todas
   const [filterMonth, setFilterMonth] = useState<string>(getCurrentMonthString())
+  const [filterType, setFilterType] = useState<'todos' | 'receita' | 'despesa'>('todos')
 
   // Modais de Criação
   const [isCreateOpen, setIsCreateOpen] = useState(false)
@@ -66,6 +68,7 @@ export const Historico: React.FC = () => {
   const [newDesc, setNewDesc] = useState('')
   const [newAmount, setNewAmount] = useState<string>('')
   const [newCatId, setNewCatId] = useState<number>(0)
+  const [newType, setNewType] = useState<'despesa' | 'receita'>('despesa')
   const [newDate, setNewDate] = useState(getTodayString())
   const [newSource, setNewSource] = useState<'manual' | 'whatsapp'>('manual')
 
@@ -79,12 +82,36 @@ export const Historico: React.FC = () => {
   const [editDesc, setEditDesc] = useState('')
   const [editAmount, setEditAmount] = useState<string>('')
   const [editCatId, setEditCatId] = useState<number>(0)
+  const [editType, setEditType] = useState<'despesa' | 'receita'>('despesa')
   const [editDate, setEditDate] = useState('')
   const [editSource, setEditSource] = useState<'manual' | 'whatsapp'>('manual')
 
   // Modal de Exclusão
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [txToDelete, setTxToDelete] = useState<TransactionWithCategory | null>(null)
+
+  // --- FILTRO DE CATEGORIAS POR TIPO ---
+  const filteredCreateCategories = dbCategories.filter(cat => cat.type === newType)
+  const filteredEditCategories = dbCategories.filter(cat => cat.type === editType)
+
+  // Seleção automática de primeira categoria ao trocar de tipo
+  useEffect(() => {
+    const catsOfType = dbCategories.filter(cat => cat.type === newType)
+    if (catsOfType.length > 0) {
+      setNewCatId(catsOfType[0].id)
+    } else {
+      setNewCatId(0)
+    }
+  }, [newType, dbCategories])
+
+  useEffect(() => {
+    const catsOfType = dbCategories.filter(cat => cat.type === editType)
+    if (catsOfType.length > 0) {
+      setEditCatId(catsOfType[0].id)
+    } else {
+      setEditCatId(0)
+    }
+  }, [editType, dbCategories])
 
   // --- CARREGAMENTO INICIAL ---
   const loadData = async () => {
@@ -98,7 +125,8 @@ export const Historico: React.FC = () => {
       // 2. Busca as transações com os filtros atuais
       const txs = await getTransactions({
         categoryId: filterCategory,
-        month: filterMonth
+        month: filterMonth,
+        type: filterType
       })
       setTransactions(txs)
     } catch (err: any) {
@@ -108,10 +136,10 @@ export const Historico: React.FC = () => {
     }
   }
 
-  // Carrega na montagem
+  // Carrega na montagem e também quando o filterType muda automaticamente
   useEffect(() => {
     loadData()
-  }, [])
+  }, [filterType])
 
   // Auto-close success message toast
   useEffect(() => {
@@ -131,7 +159,8 @@ export const Historico: React.FC = () => {
     try {
       const txs = await getTransactions({
         categoryId: filterCategory,
-        month: filterMonth
+        month: filterMonth,
+        type: filterType
       })
       setTransactions(txs)
     } catch (err: any) {
@@ -145,8 +174,10 @@ export const Historico: React.FC = () => {
   const handleOpenCreate = () => {
     setNewDesc('')
     setNewAmount('')
-    // Escolhe a primeira categoria por padrão se houver
-    setNewCatId(dbCategories.length > 0 ? dbCategories[0].id : 0)
+    setNewType('despesa')
+    // Escolhe a primeira categoria de despesa por padrão se houver
+    const expenseCats = dbCategories.filter(cat => cat.type === 'despesa')
+    setNewCatId(expenseCats.length > 0 ? expenseCats[0].id : 0)
     setNewDate(getTodayString())
     setNewSource('manual')
     setCreateError(null)
@@ -182,6 +213,7 @@ export const Historico: React.FC = () => {
         description: newDesc,
         amount: val,
         category_id: newCatId,
+        type: newType,
         date: newDate,
         source: newSource
       })
@@ -201,6 +233,7 @@ export const Historico: React.FC = () => {
     setEditDesc(tx.description)
     setEditAmount(tx.amount.toString())
     setEditCatId(tx.category_id)
+    setEditType(tx.type || 'despesa')
     setEditDate(tx.date)
     setEditSource(tx.source)
     setEditError(null)
@@ -238,6 +271,7 @@ export const Historico: React.FC = () => {
         description: editDesc,
         amount: val,
         category_id: editCatId,
+        type: editType,
         date: editDate,
         source: editSource
       })
@@ -305,6 +339,20 @@ export const Historico: React.FC = () => {
             {/* Campo Select Categoria + Input Mês */}
             <div className="flex flex-wrap items-center gap-3.5">
               
+              {/* Select Tipo */}
+              <div className="flex flex-col gap-1">
+                <span className="text-[10px] font-semibold text-[#9CA3AF] uppercase">Tipo</span>
+                <select
+                  value={filterType}
+                  onChange={(e) => setFilterType(e.target.value as any)}
+                  className="px-3 py-1.5 border border-[#E8E8EE] bg-white rounded-[10px] text-xs font-semibold text-[#111827] focus:outline-none focus:border-[#7F77DD] focus:ring-1 focus:ring-[#7F77DD] transition-all min-w-[110px] cursor-pointer"
+                >
+                  <option value="todos">Todos</option>
+                  <option value="despesa">Despesas</option>
+                  <option value="receita">Receitas</option>
+                </select>
+              </div>
+
               {/* Select Categoria */}
               <div className="flex flex-col gap-1">
                 <span className="text-[10px] font-semibold text-[#9CA3AF] uppercase">Categoria</span>
@@ -314,9 +362,11 @@ export const Historico: React.FC = () => {
                   className="px-3 py-1.5 border border-[#E8E8EE] bg-white rounded-[10px] text-xs font-semibold text-[#111827] focus:outline-none focus:border-[#7F77DD] focus:ring-1 focus:ring-[#7F77DD] transition-all min-w-[150px] cursor-pointer"
                 >
                   <option value={0}>Todas as categorias</option>
-                  {dbCategories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>{cat.name}</option>
-                  ))}
+                  {dbCategories
+                    .filter(cat => filterType === 'todos' || cat.type === filterType)
+                    .map((cat) => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))}
                 </select>
               </div>
 
@@ -416,11 +466,18 @@ export const Historico: React.FC = () => {
                           {tx.categories?.name || 'Sem categoria'}
                         </span>
                       </td>
-                      <td className="p-4 text-sm font-extrabold text-[#EF4444] whitespace-nowrap">
-                        <span className="inline-flex items-center gap-0.5">
-                          <ArrowDownRight className="w-3.5 h-3.5 shrink-0" />
-                          -{formatCurrency(tx.amount)}
-                        </span>
+                      <td className="p-4 text-sm font-extrabold whitespace-nowrap">
+                        {tx.type === 'receita' ? (
+                          <span className="inline-flex items-center gap-0.5 text-[#15803D]">
+                            <ArrowUpRight className="w-3.5 h-3.5 shrink-0" />
+                            +{formatCurrency(tx.amount)}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-0.5 text-[#EF4444]">
+                            <ArrowDownRight className="w-3.5 h-3.5 shrink-0" />
+                            -{formatCurrency(tx.amount)}
+                          </span>
+                        )}
                       </td>
                       <td className="p-4">
                         <Badge variant={tx.source} />
@@ -471,6 +528,35 @@ export const Historico: React.FC = () => {
             
             <form onSubmit={handleCreateSubmit} className="flex flex-col gap-4">
               
+              {/* Tipo de Transação (Segmented Control/Toggle) */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-[#111827]">Tipo de Transação</label>
+                <div className="grid grid-cols-2 p-1 bg-[#F4F5F7] rounded-[12px] border border-[#E8E8EE]">
+                  <button
+                    type="button"
+                    onClick={() => setNewType('despesa')}
+                    className={`py-1.5 text-xs font-bold rounded-[8px] transition-all cursor-pointer ${
+                      newType === 'despesa'
+                        ? 'bg-white text-[#EF4444] shadow-sm'
+                        : 'text-[#9CA3AF] hover:text-[#111827]'
+                    }`}
+                  >
+                    Despesa
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNewType('receita')}
+                    className={`py-1.5 text-xs font-bold rounded-[8px] transition-all cursor-pointer ${
+                      newType === 'receita'
+                        ? 'bg-white text-[#15803D] shadow-sm'
+                        : 'text-[#9CA3AF] hover:text-[#111827]'
+                    }`}
+                  >
+                    Receita
+                  </button>
+                </div>
+              </div>
+
               {/* Descrição */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-semibold text-[#111827]">Descrição</label>
@@ -508,9 +594,12 @@ export const Historico: React.FC = () => {
                     className="w-full px-3 py-2 border border-[#E8E8EE] rounded-[10px] text-sm text-[#111827] bg-white focus:outline-none focus:border-[#7F77DD] focus:ring-1 focus:ring-[#7F77DD] transition-all cursor-pointer"
                     disabled={createLoading}
                   >
-                    {dbCategories.map((cat) => (
+                    {filteredCreateCategories.map((cat) => (
                       <option key={cat.id} value={cat.id}>{cat.name}</option>
                     ))}
+                    {filteredCreateCategories.length === 0 && (
+                      <option value={0}>Nenhuma categoria disponível</option>
+                    )}
                   </select>
                 </div>
               </div>
@@ -584,6 +673,35 @@ export const Historico: React.FC = () => {
             
             <form onSubmit={handleEditSubmit} className="flex flex-col gap-4">
               
+              {/* Tipo de Transação (Segmented Control/Toggle) */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-[#111827]">Tipo de Transação</label>
+                <div className="grid grid-cols-2 p-1 bg-[#F4F5F7] rounded-[12px] border border-[#E8E8EE]">
+                  <button
+                    type="button"
+                    onClick={() => setEditType('despesa')}
+                    className={`py-1.5 text-xs font-bold rounded-[8px] transition-all cursor-pointer ${
+                      editType === 'despesa'
+                        ? 'bg-white text-[#EF4444] shadow-sm'
+                        : 'text-[#9CA3AF] hover:text-[#111827]'
+                    }`}
+                  >
+                    Despesa
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditType('receita')}
+                    className={`py-1.5 text-xs font-bold rounded-[8px] transition-all cursor-pointer ${
+                      editType === 'receita'
+                        ? 'bg-white text-[#15803D] shadow-sm'
+                        : 'text-[#9CA3AF] hover:text-[#111827]'
+                    }`}
+                  >
+                    Receita
+                  </button>
+                </div>
+              </div>
+
               {/* Descrição */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-semibold text-[#111827]">Descrição</label>
@@ -619,9 +737,12 @@ export const Historico: React.FC = () => {
                     className="w-full px-3 py-2 border border-[#E8E8EE] rounded-[10px] text-sm text-[#111827] bg-white focus:outline-none focus:border-[#7F77DD] focus:ring-1 focus:ring-[#7F77DD] transition-all cursor-pointer"
                     disabled={editLoading}
                   >
-                    {dbCategories.map((cat) => (
+                    {filteredEditCategories.map((cat) => (
                       <option key={cat.id} value={cat.id}>{cat.name}</option>
                     ))}
+                    {filteredEditCategories.length === 0 && (
+                      <option value={0}>Nenhuma categoria disponível</option>
+                    )}
                   </select>
                 </div>
               </div>

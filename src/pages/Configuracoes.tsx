@@ -100,8 +100,12 @@ export const Configuracoes: React.FC = () => {
   // Modais de Criação
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [newName, setNewName] = useState('')
+  const [newCategoryType, setNewCategoryType] = useState<'despesa' | 'receita'>('despesa')
   const [createError, setCreateError] = useState<string | null>(null)
   const [createLoading, setCreateLoading] = useState(false)
+
+  // Abas de categorias
+  const [activeCategoryTab, setActiveCategoryTab] = useState<'despesa' | 'receita'>('despesa')
 
   // Modais de Edição
   const [isEditOpen, setIsEditOpen] = useState(false)
@@ -151,6 +155,7 @@ export const Configuracoes: React.FC = () => {
   // --- CRIAR CATEGORIA ---
   const handleOpenCreate = () => {
     setNewName('')
+    setNewCategoryType(activeCategoryTab)
     setCreateError(null)
     setIsCreateOpen(true)
   }
@@ -166,7 +171,7 @@ export const Configuracoes: React.FC = () => {
     setCreateLoading(true)
     setCreateError(null)
     try {
-      await createCategory(trimmed)
+      await createCategory(trimmed, newCategoryType)
       setIsCreateOpen(false)
       setSuccessMessage('Categoria criada com sucesso!')
       await loadCategories()
@@ -416,6 +421,30 @@ export const Configuracoes: React.FC = () => {
             </button>
           </div>
 
+          {/* Abas/Tabs para Despesas e Receitas */}
+          <div className="flex border-b border-[#E8E8EE] gap-6">
+            <button
+              onClick={() => setActiveCategoryTab('despesa')}
+              className={`pb-3 text-sm font-bold border-b-2 transition-all cursor-pointer ${
+                activeCategoryTab === 'despesa'
+                  ? 'border-[#7F77DD] text-[#7F77DD]'
+                  : 'border-transparent text-[#9CA3AF] hover:text-[#111827]'
+              }`}
+            >
+              Categorias de Despesas
+            </button>
+            <button
+              onClick={() => setActiveCategoryTab('receita')}
+              className={`pb-3 text-sm font-bold border-b-2 transition-all cursor-pointer ${
+                activeCategoryTab === 'receita'
+                  ? 'border-[#7F77DD] text-[#7F77DD]'
+                  : 'border-transparent text-[#9CA3AF] hover:text-[#111827]'
+              }`}
+            >
+              Categorias de Receitas
+            </button>
+          </div>
+
           {/* Banner de Erros Gerais (ex: Falha de conexão ou violação de chave estrangeira) */}
           {dbError && (
             <div className="p-4 bg-[#FEE2E2] border border-[#FCA5A5]/40 rounded-[10px] text-xs font-medium text-[#EF4444] flex items-start gap-2.5 relative animate-in fade-in duration-200">
@@ -444,61 +473,64 @@ export const Configuracoes: React.FC = () => {
                 </div>
               ))}
             </div>
-          ) : categories.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-[#E8E8EE] bg-[#F9FAFB]/30">
-                    <th className="p-3.5 text-xs font-bold text-[#9CA3AF] uppercase w-24">ID</th>
-                    <th className="p-3.5 text-xs font-bold text-[#9CA3AF] uppercase">Nome da Categoria</th>
-                    <th className="p-3.5 text-xs font-bold text-[#9CA3AF] uppercase text-right w-32">Ações</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#E8E8EE]">
-                  {categories.map((cat) => (
-                    <tr 
-                      key={cat.id} 
-                      className="hover:bg-[#F9FAFB]/40 transition-colors"
-                    >
-                      {/* ID destacado com badge cinza */}
-                      <td className="p-3.5">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-[6px] text-[11px] font-bold font-mono bg-[#F4F5F7] text-[#6B7280] border border-[#E8E8EE]">
-                          #{cat.id.toString().padStart(2, '0')}
-                        </span>
-                      </td>
-                      <td className="p-3.5 text-sm font-bold text-[#111827]">
-                        {cat.name}
-                      </td>
-                      <td className="p-3.5 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => handleOpenEdit(cat)}
-                            className="p-1.5 text-[#9CA3AF] hover:text-[#7F77DD] hover:bg-[#EEEDFE]/40 rounded-[6px] transition-all cursor-pointer"
-                            title="Editar"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleOpenDelete(cat)}
-                            className="p-1.5 text-[#9CA3AF] hover:text-[#EF4444] hover:bg-[#FEE2E2]/40 rounded-[6px] transition-all cursor-pointer"
-                            title="Excluir"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
+          ) : (() => {
+            const filteredCategories = categories.filter(cat => cat.type === activeCategoryTab)
+            return filteredCategories.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-[#E8E8EE] bg-[#F9FAFB]/30">
+                      <th className="p-3.5 text-xs font-bold text-[#9CA3AF] uppercase w-24">ID</th>
+                      <th className="p-3.5 text-xs font-bold text-[#9CA3AF] uppercase">Nome da Categoria</th>
+                      <th className="p-3.5 text-xs font-bold text-[#9CA3AF] uppercase text-right w-32">Ações</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            /* Estado Vazio */
-            <div className="py-16 border border-dashed border-[#E8E8EE] rounded-[14px] flex flex-col items-center justify-center text-[#9CA3AF] gap-3 bg-[#F9FAFB]/20">
-              <span className="text-3xl">📭</span>
-              <p className="text-sm font-medium">Nenhuma categoria encontrada no banco de dados.</p>
-            </div>
-          )}
+                  </thead>
+                  <tbody className="divide-y divide-[#E8E8EE]">
+                    {filteredCategories.map((cat) => (
+                      <tr 
+                        key={cat.id} 
+                        className="hover:bg-[#F9FAFB]/40 transition-colors"
+                      >
+                        {/* ID destacado com badge cinza */}
+                        <td className="p-3.5">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-[6px] text-[11px] font-bold font-mono bg-[#F4F5F7] text-[#6B7280] border border-[#E8E8EE]">
+                            #{cat.id.toString().padStart(2, '0')}
+                          </span>
+                        </td>
+                        <td className="p-3.5 text-sm font-bold text-[#111827]">
+                          {cat.name}
+                        </td>
+                        <td className="p-3.5 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => handleOpenEdit(cat)}
+                              className="p-1.5 text-[#9CA3AF] hover:text-[#7F77DD] hover:bg-[#EEEDFE]/40 rounded-[6px] transition-all cursor-pointer"
+                              title="Editar"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleOpenDelete(cat)}
+                              className="p-1.5 text-[#9CA3AF] hover:text-[#EF4444] hover:bg-[#FEE2E2]/40 rounded-[6px] transition-all cursor-pointer"
+                              title="Excluir"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              /* Estado Vazio */
+              <div className="py-16 border border-dashed border-[#E8E8EE] rounded-[14px] flex flex-col items-center justify-center text-[#9CA3AF] gap-3 bg-[#F9FAFB]/20">
+                <span className="text-3xl">📭</span>
+                <p className="text-sm font-medium">Nenhuma categoria encontrada para esta aba.</p>
+              </div>
+            )
+          })()}
         </section>
       </main>
 
@@ -510,6 +542,36 @@ export const Configuracoes: React.FC = () => {
             <p className="text-xs text-[#9CA3AF] mb-5">Adicione uma classificação para categorizar suas transações.</p>
             
             <form onSubmit={handleCreateSubmit} className="flex flex-col gap-4">
+              
+              {/* Tipo de Categoria (Segmented Control/Toggle) */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-[#111827]">Tipo de Categoria</label>
+                <div className="grid grid-cols-2 p-1 bg-[#F4F5F7] rounded-[12px] border border-[#E8E8EE]">
+                  <button
+                    type="button"
+                    onClick={() => setNewCategoryType('despesa')}
+                    className={`py-1.5 text-xs font-bold rounded-[8px] transition-all cursor-pointer ${
+                      newCategoryType === 'despesa'
+                        ? 'bg-white text-[#EF4444] shadow-sm'
+                        : 'text-[#9CA3AF] hover:text-[#111827]'
+                    }`}
+                  >
+                    Despesa
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNewCategoryType('receita')}
+                    className={`py-1.5 text-xs font-bold rounded-[8px] transition-all cursor-pointer ${
+                      newCategoryType === 'receita'
+                        ? 'bg-white text-[#15803D] shadow-sm'
+                        : 'text-[#9CA3AF] hover:text-[#111827]'
+                    }`}
+                  >
+                    Receita
+                  </button>
+                </div>
+              </div>
+
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-semibold text-[#111827]">Nome da categoria</label>
                 <input

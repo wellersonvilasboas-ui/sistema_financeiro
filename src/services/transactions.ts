@@ -16,6 +16,7 @@ export interface TransactionWithCategory extends Transaction {
 export async function getTransactions(filters?: {
   categoryId?: number
   month?: string
+  type?: 'despesa' | 'receita' | 'todos'
 }): Promise<TransactionWithCategory[]> {
   let query = supabase
     .from('transactions')
@@ -27,6 +28,11 @@ export async function getTransactions(filters?: {
     // Filtro por Categoria
     if (filters.categoryId && filters.categoryId > 0) {
       query = query.eq('category_id', filters.categoryId)
+    }
+
+    // Filtro por Tipo (Receita / Despesa)
+    if (filters.type && filters.type !== 'todos') {
+      query = query.eq('type', filters.type)
     }
 
     // Filtro por Mês (calcula os limites do mês)
@@ -80,6 +86,7 @@ export async function createTransaction(
         description: transaction.description.trim(),
         amount: transaction.amount,
         category_id: transaction.category_id,
+        type: transaction.type || 'despesa',
         date: transaction.date,
         source: transaction.source || 'manual'
       }
@@ -121,6 +128,7 @@ export async function updateTransaction(
   if (transaction.description !== undefined) updateData.description = transaction.description.trim()
   if (transaction.amount !== undefined) updateData.amount = transaction.amount
   if (transaction.category_id !== undefined) updateData.category_id = transaction.category_id
+  if (transaction.type !== undefined) updateData.type = transaction.type
   if (transaction.date !== undefined) updateData.date = transaction.date
   if (transaction.source !== undefined) updateData.source = transaction.source
 
