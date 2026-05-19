@@ -28,6 +28,7 @@ import {
   X,
   ArrowRight
 } from 'lucide-react'
+import { formatCurrency, getCurrencySymbol } from '../utils/format'
 import {
   BarChart,
   Bar,
@@ -305,7 +306,7 @@ export const Dashboard: React.FC = () => {
         gasto: gc.gasto,
         limite: limite,
         restante: restante,
-        text: `R$ ${gc.gasto.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} / R$ ${limite.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+        text: `${formatCurrency(gc.gasto)} / ${formatCurrency(limite)}`
       }
     })
     .sort((a, b) => b.percent - a.percent)
@@ -349,7 +350,7 @@ export const Dashboard: React.FC = () => {
             {data.categoriesInfo.map((cat: any, idx: number) => (
               <div key={idx} className="flex justify-between gap-4 text-[#6B7280]">
                 <span>{cat.name}:</span>
-                <span className="font-semibold text-[#111827]">R$ {cat.val.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                <span className="font-semibold text-[#111827]">{formatCurrency(cat.val)}</span>
               </div>
             ))}
             {data.categoriesInfo.length === 0 && (
@@ -358,7 +359,7 @@ export const Dashboard: React.FC = () => {
           </div>
           <div className="border-t border-[#E8E8EE] pt-1 flex justify-between gap-4 font-bold text-[#7F77DD]">
             <span>Total:</span>
-            <span>R$ {data.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+            <span>{formatCurrency(data.total)}</span>
           </div>
         </div>
       )
@@ -469,7 +470,7 @@ export const Dashboard: React.FC = () => {
                     Você gastou
                   </span>
                   <span className="text-[22px] font-extrabold text-[#111827] leading-none">
-                    R$ {totalGastoMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    {formatCurrency(totalGastoMes)}
                   </span>
                   <span className="text-[11px] font-semibold text-[#9CA3AF] mt-0.5">
                     neste período
@@ -488,10 +489,10 @@ export const Dashboard: React.FC = () => {
                   </span>
                   <span className={`text-[22px] font-extrabold leading-none ${saldoDisponivel >= 0 ? 'text-[#111827]' : 'text-[#EF4444]'
                     }`}>
-                    R$ {saldoDisponivel.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    {formatCurrency(saldoDisponivel)}
                   </span>
                   <span className="text-[11px] font-semibold text-[#9CA3AF] mt-0.5">
-                    de R$ {totalOrcado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} em metas definidas
+                    de {formatCurrency(totalOrcado)} em metas definidas
                   </span>
                 </div>
                 <div className="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 bg-[#DCFCE7] text-[#15803D]">
@@ -510,7 +511,7 @@ export const Dashboard: React.FC = () => {
                   </span>
                   {maiorGastoCat && (
                     <span className="text-[11px] font-semibold text-[#9CA3AF] mt-0.5">
-                      R$ {maiorGastoCat.gasto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} gastos nesta categoria
+                      {formatCurrency(maiorGastoCat.gasto)} gastos nesta categoria
                     </span>
                   )}
                 </div>
@@ -553,7 +554,7 @@ export const Dashboard: React.FC = () => {
                         fontSize={10}
                         tickLine={false}
                         axisLine={false}
-                        tickFormatter={(val) => `R$ ${val}`}
+                        tickFormatter={(val) => `${getCurrencySymbol()} ${val}`}
                       />
                       <Tooltip content={<CustomLineTooltip />} />
                       <Line
@@ -601,7 +602,7 @@ export const Dashboard: React.FC = () => {
                           {goal.percent}% consumida
                         </span>
                         <span className={goal.restante >= 0 ? 'text-[#15803D]' : 'text-[#EF4444]'}>
-                          {goal.restante >= 0 ? `R$ ${goal.restante.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} restante` : `R$ ${Math.abs(goal.restante).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} excedido`}
+                          {goal.restante >= 0 ? `${formatCurrency(goal.restante)} restante` : `${formatCurrency(Math.abs(goal.restante))} excedido`}
                         </span>
                       </div>
                     </div>
