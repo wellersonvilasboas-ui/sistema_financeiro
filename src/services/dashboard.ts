@@ -36,6 +36,7 @@ export async function getTotalGasto(mes: string): Promise<number> {
   const { data, error } = await supabase
     .from('transactions')
     .select('amount')
+    .eq('type', 'despesa')
     .gte('date', startDate)
     .lte('date', endDate)
 
@@ -74,15 +75,19 @@ export async function getGastoPorCategoria(mes: string): Promise<GastoCategoria[
     getTransactions({ month: mes })
   ])
 
+  // Filtramos para apenas despesas
+  const despesaCategories = categories.filter(c => c.type === 'despesa')
+  const despesaTransactions = transactions.filter(t => t.type === 'despesa')
+
   // Agrupamos os gastos no Javascript
   const gastosMap: Record<number, number> = {}
-  transactions.forEach((tx) => {
+  despesaTransactions.forEach((tx) => {
     const cid = tx.category_id
     gastosMap[cid] = (gastosMap[cid] || 0) + Number(tx.amount)
   })
 
   // Mapeamos a resposta para conter todas as categorias cadastradas no sistema
-  const result: GastoCategoria[] = categories.map((cat) => {
+  const result: GastoCategoria[] = despesaCategories.map((cat) => {
     const budget = budgets.find((b) => b.category_id === cat.id)
     return {
       category_id: cat.id,
