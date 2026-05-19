@@ -51,8 +51,8 @@ export const Sidebar: React.FC = () => {
   const username = user?.email ? user.email.split('@')[0] : 'Usuário'
   const capitalizedUsername = username.charAt(0).toUpperCase() + username.slice(1)
 
-  // Standard premium profile avatar photo
-  const avatarUrl = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'
+  // Dinâmico: Avatar do usuário (ou fallback premium padrão)
+  const avatarUrl = user?.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'
 
   return (
     <aside className="flex h-screen select-none border-r border-[#E8E8EE] shrink-0">

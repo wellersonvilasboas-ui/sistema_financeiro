@@ -9,9 +9,9 @@ import {
   deleteCategory 
 } from '../services/categories'
 import type { Category } from '../types'
-import { Edit2, Trash2, Plus, FolderOpen, Loader2, AlertCircle, CheckCircle2, X, Camera, UserCircle } from 'lucide-react'
+import { Edit2, Trash2, Plus, FolderOpen, Loader2, AlertCircle, CheckCircle2, X, Camera, UserCircle, Lock } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
-import { uploadAvatar, updateProfileAvatar } from '../services/profile'
+import { uploadAvatar, updateProfileAvatar, updatePassword } from '../services/profile'
 
 export const Configuracoes: React.FC = () => {
   const { user } = useAuth()
@@ -23,6 +23,47 @@ export const Configuracoes: React.FC = () => {
   // Avatar Logic
   const [avatarLoading, setAvatarLoading] = useState(false)
   const currentAvatarUrl = user?.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'
+
+  // Password Logic
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [passwordLoading, setPasswordLoading] = useState(false)
+  const [passwordError, setPasswordError] = useState<string | null>(null)
+
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setPasswordError(null)
+
+    const trimmedPassword = password.trim()
+    const trimmedConfirmPassword = confirmPassword.trim()
+
+    if (!trimmedPassword || !trimmedConfirmPassword) {
+      setPasswordError('Todos os campos de senha são obrigatórios.')
+      return
+    }
+
+    if (trimmedPassword.length < 6) {
+      setPasswordError('A nova senha deve ter pelo menos 6 caracteres.')
+      return
+    }
+
+    if (trimmedPassword !== trimmedConfirmPassword) {
+      setPasswordError('As senhas digitadas não coincidem.')
+      return
+    }
+
+    setPasswordLoading(true)
+    try {
+      await updatePassword(trimmedPassword)
+      setSuccessMessage('Senha alterada com sucesso!')
+      setPassword('')
+      setConfirmPassword('')
+    } catch (err: any) {
+      setPasswordError(err.message || 'Falha ao alterar a senha.')
+    } finally {
+      setPasswordLoading(false)
+    }
+  }
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return
@@ -246,6 +287,80 @@ export const Configuracoes: React.FC = () => {
               </div>
             </div>
           </div>
+        </section>
+
+        {/* Bloco de Segurança e Senha */}
+        <section className="bg-white border border-[#E8E8EE] rounded-[14px] shadow-sm p-6 flex flex-col gap-5">
+          <div className="flex items-center gap-3 pb-4 border-b border-[#E8E8EE]">
+            <div className="w-10 h-10 rounded-[10px] bg-[#EEEDFE] text-[#7F77DD] flex items-center justify-center">
+              <Lock className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-[#111827]">Segurança e Senha</h2>
+              <p className="text-xs text-[#9CA3AF] font-medium mt-0.5">
+                Mantenha sua conta segura alterando sua senha regularmente.
+              </p>
+            </div>
+          </div>
+
+          {passwordError && (
+            <div className="p-4 bg-[#FEE2E2] border border-[#FCA5A5]/40 rounded-[10px] text-xs font-medium text-[#EF4444] flex items-start gap-2.5 relative animate-in fade-in duration-200">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <div className="flex-1 pr-6 leading-relaxed">
+                {passwordError}
+              </div>
+              <button 
+                type="button"
+                onClick={() => setPasswordError(null)}
+                className="absolute top-3 right-3 text-[#EF4444] hover:opacity-80 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
+          <form onSubmit={handlePasswordSubmit} className="flex flex-col gap-4 max-w-md">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-[#111827]">Nova senha</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value)
+                  if (passwordError) setPasswordError(null)
+                }}
+                placeholder="Mínimo 6 caracteres"
+                className="w-full px-3 py-2 border border-[#E8E8EE] rounded-[10px] text-sm text-[#111827] bg-[#F4F5F7]/30 placeholder-[#9CA3AF] focus:outline-none focus:border-[#7F77DD] focus:ring-1 focus:ring-[#7F77DD] transition-all"
+                disabled={passwordLoading}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-[#111827]">Confirmar nova senha</label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value)
+                  if (passwordError) setPasswordError(null)
+                }}
+                placeholder="Confirme sua nova senha"
+                className="w-full px-3 py-2 border border-[#E8E8EE] rounded-[10px] text-sm text-[#111827] bg-[#F4F5F7]/30 placeholder-[#9CA3AF] focus:outline-none focus:border-[#7F77DD] focus:ring-1 focus:ring-[#7F77DD] transition-all"
+                disabled={passwordLoading}
+              />
+            </div>
+
+            <div className="flex justify-start mt-2">
+              <button
+                type="submit"
+                disabled={passwordLoading}
+                className="px-5 py-2 bg-[#7F77DD] hover:bg-[#534AB7] text-white rounded-[999px] text-xs font-semibold flex items-center gap-1.5 transition-all duration-200 cursor-pointer shadow-sm shadow-[#7F77DD]/20 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {passwordLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                Alterar senha
+              </button>
+            </div>
+          </form>
         </section>
 
         {/* Bloco de Configurações de Categorias */}

@@ -41,3 +41,17 @@ export async function updateProfileAvatar(avatarUrl: string): Promise<void> {
     throw new Error(`Falha ao salvar a foto de perfil: ${error.message}`)
   }
 }
+
+/**
+ * Atualiza a senha do usuário logado no Supabase Auth
+ */
+export async function updatePassword(password: string): Promise<void> {
+  const { error } = await supabase.auth.updateUser({
+    password: password
+  })
+
+  if (error) {
+    if (import.meta.env.DEV) console.error('[profile.service] Erro ao atualizar senha:', error)
+    throw new Error(`Falha ao alterar a senha: ${error.message}`)
+  }
+}
