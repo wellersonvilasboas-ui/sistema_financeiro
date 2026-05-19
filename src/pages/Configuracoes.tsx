@@ -245,7 +245,7 @@ export const Configuracoes: React.FC = () => {
       )}
 
       {/* Conteúdo scrollável com fundo geral #F4F5F7 */}
-      <main className="flex-1 overflow-y-auto p-6 bg-[#F4F5F7] flex flex-col gap-6">
+      <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-[#F4F5F7] flex flex-col gap-5 md:gap-6">
         
         {/* Banner de Recuperação de Senha */}
         {isFromRecovery && (
@@ -505,7 +505,7 @@ export const Configuracoes: React.FC = () => {
       {/* MODAL 1: CRIAR CATEGORIA */}
       {isCreateOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm transition-opacity duration-300">
-          <div className="w-full max-w-md bg-white border border-[#E8E8EE] rounded-[14px] shadow-2xl p-6 transform scale-100 transition-all duration-300 animate-in fade-in zoom-in-95">
+          <div className="w-full max-w-md bg-white border border-[#E8E8EE] rounded-[14px] shadow-2xl p-4 sm:p-6 transform scale-100 transition-all duration-300 animate-in fade-in zoom-in-95">
             <h3 className="text-lg font-bold text-[#111827] mb-3">Nova Categoria</h3>
             <p className="text-xs text-[#9CA3AF] mb-5">Adicione uma classificação para categorizar suas transações.</p>
             
@@ -556,7 +556,7 @@ export const Configuracoes: React.FC = () => {
       {/* MODAL 2: EDITAR CATEGORIA */}
       {isEditOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm transition-opacity duration-300">
-          <div className="w-full max-w-md bg-white border border-[#E8E8EE] rounded-[14px] shadow-2xl p-6 transform scale-100 transition-all duration-300 animate-in fade-in zoom-in-95">
+          <div className="w-full max-w-md bg-white border border-[#E8E8EE] rounded-[14px] shadow-2xl p-4 sm:p-6 transform scale-100 transition-all duration-300 animate-in fade-in zoom-in-95">
             <h3 className="text-lg font-bold text-[#111827] mb-3">Editar Categoria</h3>
             <p className="text-xs text-[#9CA3AF] mb-5">Altere o nome da classificação cadastrada.</p>
             

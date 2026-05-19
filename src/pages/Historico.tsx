@@ -296,7 +296,7 @@ export const Historico: React.FC = () => {
       )}
 
       {/* Conteúdo scrollável com fundo geral #F4F5F7 */}
-      <main className="flex-1 overflow-y-auto p-6 bg-[#F4F5F7] flex flex-col gap-6">
+      <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-[#F4F5F7] flex flex-col gap-5 md:gap-6">
 
         {/* Filtros no topo */}
         <section className="bg-white border border-[#E8E8EE] rounded-[14px] p-[16px_18px] shadow-sm">
@@ -462,7 +462,7 @@ export const Historico: React.FC = () => {
       {/* MODAL 1: CRIAR TRANSAÇÃO */}
       {isCreateOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm transition-opacity duration-300">
-          <div className="w-full max-w-md bg-white border border-[#E8E8EE] rounded-[14px] shadow-2xl p-6 transform scale-100 transition-all duration-300 animate-in fade-in zoom-in-95">
+          <div className="w-full max-w-md bg-white border border-[#E8E8EE] rounded-[14px] shadow-2xl p-4 sm:p-6 transform scale-100 transition-all duration-300 animate-in fade-in zoom-in-95">
             <div className="flex items-center gap-2 mb-2">
               <PlusCircle className="w-5 h-5 text-[#7F77DD]" />
               <h3 className="text-lg font-bold text-[#111827]">Nova Transação</h3>
@@ -575,7 +575,7 @@ export const Historico: React.FC = () => {
       {/* MODAL 2: EDITAR TRANSAÇÃO */}
       {isEditOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm transition-opacity duration-300">
-          <div className="w-full max-w-md bg-white border border-[#E8E8EE] rounded-[14px] shadow-2xl p-6 transform scale-100 transition-all duration-300 animate-in fade-in zoom-in-95">
+          <div className="w-full max-w-md bg-white border border-[#E8E8EE] rounded-[14px] shadow-2xl p-4 sm:p-6 transform scale-100 transition-all duration-300 animate-in fade-in zoom-in-95">
             <div className="flex items-center gap-2 mb-2">
               <Edit2 className="w-5 h-5 text-[#7F77DD]" />
               <h3 className="text-lg font-bold text-[#111827]">Editar Transação</h3>
